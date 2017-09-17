@@ -290,6 +290,14 @@ def do_something_special(text, n, j):
         for j in range(120):
             for k in range(0, 64):
                 for l in range(10):
+                    # if l == 0:
+                        # in here is where each transformation will go.
+                        # so if 0, do the first transformation and so on.
+                        # some transformations (derivatives) have only 255 points rather than 256
+                        # so ensure that the ANN in the SaveResults section is organised, or use len()
+                        # Yep your project is as simple as using my code and pumping through a bunch of options
+                        # And then recording 100 times more data (10kSps) with a few (5) people
+                        # and seeing if it improves your accuracy beyond 1-2 %
                     statistics = stats[k]
                     home = '/Users/jackmclovin/PycharmProjects Data/BCI Data/RasppiBasedBCI/Transformed Data/'
                     actual_file_name = home + to_str(n) + '/' + to_str(j) + '/' + to_str(k) + '/' + to_str(l) + '.json'
