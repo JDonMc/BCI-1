@@ -3,6 +3,8 @@ import tensorflow as tf
 import json
 import os
 import numpy as np
+import pandas as pd
+import string
 # Need to cycle through below and save the accuracy over P from 1->Max number of recordings per person
 
 home = '/Users/jackmclovin/PycharmProjects Data/BCI Data/RasppiBasedBCI/'
@@ -50,8 +52,8 @@ def dump_results(layers, channel_number, transformation_number, stats):
 # use to_list() on way through and way back use np.array(json.load(xxx))
 
 
-def import_inputs_train(max_people, max_tests, channel_number, transformation_number, proportion):
-    inputs = np.zeros([proportion * max_people, 256])
+def import_inputs_train(inlength, max_people, max_tests, channel_number, transformation_number, proportion):
+    inputs = np.zeros([proportion * max_people, inlength])
     counter = 0
     for number_person in range(max_people):
         for test_number in range(0, proportion):
@@ -65,13 +67,14 @@ def import_inputs_train(max_people, max_tests, channel_number, transformation_nu
 # Finds the Inputs[test][pers] for a specific Channel and Transformation
 
 
-def import_inputs_test(max_persons, max_tests, channel_number, transformation_number, proportion):
-    inputs = np.zeros([max_persons * proportion, 256])
+def import_inputs_test(inlength, max_persons, max_tests, channel_number, transformation_number, proportion):
+    inputs = np.zeros([max_persons * proportion, inlength])
     counter = 0
     for number_person in range(max_persons):
         for test_number in range(proportion, proportion * 2):
             importing_file = home + 'Transformed Data/' + to_str(number_person) + '/' + to_str(test_number) + '/' \
                              + to_str(channel_number) + '/' + to_str(transformation_number) + '.json'
+
             with open(importing_file, 'rb') as fp:
                 inputs[counter] = json.load(fp)
             counter += 1
@@ -104,22 +107,22 @@ def generate_test_outputs(max_people, max_tests, proportion, truth_limit):
     return test_outputs
 
 
-def generate_results(layers, max_people, max_tests, channel_num, transformation_num, truth_limit):
+def generate_results(inlength, layers, max_people, max_tests, channel_num, transformation_num, truth_limit):
     steps = int((max_tests-10) / 5)
     this_is_it = [0] * steps
     counting = 0
     for proportion in range(10, 15, 5):
-        inputs_test = np.array(import_inputs_test(max_people, max_tests, channel_num, transformation_num, proportion),
+        inputs_test = np.array(import_inputs_test(inlength, max_people, max_tests, channel_num, transformation_num, proportion),
                                dtype=object)
-        inputs_train = np.array(import_inputs_train(max_people, max_tests, channel_num, transformation_num, proportion),
+        inputs_train = np.array(import_inputs_train(inlength, max_people, max_tests, channel_num, transformation_num, proportion),
                                 dtype=object)
 
         outputs_train = np.array(generate_train_outputs(max_people, max_tests, proportion, truth_limit))
         outputs_test = np.array(generate_test_outputs(max_people, max_tests, proportion, truth_limit))
         # Training
 
-        x = tf.placeholder(tf.float32, [proportion * max_people, 256])
-        w = tf.Variable(tf.zeros([256, layers]))
+        x = tf.placeholder(tf.float32, [proportion * max_people, inlength])
+        w = tf.Variable(tf.zeros([inlength, layers]))
         # TF.zeros takes in the Shape = [1, 2] => [[0, 0], [0, 0]]
         b = tf.Variable(tf.zeros([layers]))
 
@@ -155,16 +158,24 @@ def generate_results(layers, max_people, max_tests, channel_num, transformation_
 # Just as the truth limit can be changed.
 
 
-def do_one_layer_transformation_channel(layer, transformation, channel):
+def do_one_layer_transformation_channel(layer, transformation, channel, inlength):
     limit = 0.95
-    results = generate_results(layer, person_max, test_max, channel, transformation, limit)
+    results = generate_results(inlength, layer, person_max, test_max, channel, transformation, limit)
     dump_results(layer, channel, transformation, results)
 
 z = 122  # Z is layer count
 t = 10  # T is transformation count
 c = 0  # C is channel count
 # Each of these need to be maximally explored along the dimension of P, proportion, and A, accuracy
-for t in range(10):
+for t in range(9, 10):
     for c in range(64):
-        do_one_layer_transformation_channel(z, t, c)
+        if t == 4 or t == 6:
+            inlength = 255
+        elif t == 5:
+            inlength = 254
+        elif t == 9:
+            inlength = 272
+        else:
+            inlength = 256
+        do_one_layer_transformation_channel(z, t, c, inlength)
 

@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 # https://matplotlib.org/users/pyplot_tutorial.html
 import json
 import os
+import pandas as pd
 # Employing an exorbitant test to find optimal determination algorithms for fingerprinting a human from brain signals.
 # __name__ == 'Brian Las Sing'
 # Brain Signals
@@ -39,7 +40,7 @@ def derivative_ab(x):
 def derivative_ac(x):
     dac = [0] * (len(x) - 1)
     for t in range(1, len(x)):
-        dac = x[t]-x[t-1]
+        dac[t-1] = x[t]-x[t-1]
     return dac
 # transform data to max
 
@@ -286,37 +287,62 @@ def do_something_special(text, n, j):
             m += 1
             te = tex.split()
             stats[i][m] = float(te[3])
-    for n in range(161):
-        for j in range(120):
-            for k in range(0, 64):
-                for l in range(10):
-                    # if l == 0:
-                        # in here is where each transformation will go.
-                        # so if 0, do the first transformation and so on.
-                        # some transformations (derivatives) have only 255 points rather than 256
-                        # so ensure that the ANN in the SaveResults section is organised, or use len()
-                        # Yep your project is as simple as using my code and pumping through a bunch of options
-                        # And then recording 100 times more data (10kSps) with a few (5) people
-                        # and seeing if it improves your accuracy beyond 1-2 %
-                    statistics = stats[k]
-                    home = '/Users/jackmclovin/PycharmProjects Data/BCI Data/RasppiBasedBCI/Transformed Data/'
-                    actual_file_name = home + to_str(n) + '/' + to_str(j) + '/' + to_str(k) + '/' + to_str(l) + '.json'
-                    # N is Number person, J is number of test, K is number of channel, L is transformation
-                    # ANN uses Predicts N from J, comparing different K's and L's over P percent learnt.
-                    if not os.path.exists(home + to_str(n) + '/'):
-                        os.makedirs(home + to_str(n) + '/')
-                    if not os.path.exists(home + to_str(n) + '/' + to_str(j) + '/'):
-                        os.makedirs(home + to_str(n) + '/' + to_str(j) + '/')
-                    if not os.path.exists(home + to_str(n) + '/' + to_str(j) + '/' + to_str(k) + '/'):
-                        os.makedirs(home + to_str(n) + '/' + to_str(j) + '/' + to_str(k) + '/')
+    for k in range(0, 64):
+        for l in range(10):
+            if l == 0:
+                statist = custom_tail(stats[k], 0.9, 0.9)
+                statistics = statist[0].tolist() + statist[1].tolist()
+            if l == 1:
+                statistics = stats[k]
+            if l == 2:
+                statist = custom_tail(stats[k], 0.8, 0.8)
+                statistics = statist[0].tolist() + statist[1].tolist()
+            if l == 3:
+                statist = custom_tail(stats[k], 0.7, 0.7)
+                statistics = statist[0].tolist() + statist[1].tolist()
+            if l == 4:
+                statistics = derivative_ac(stats[k])
+            if l == 5:
+                statistics = derivative_ab(stats[k])
+            if l == 6:
+                statistics = derivative_aa(stats[k])
+            if l == 7:
+                statist = daubechies(stats[k])
+                statistics = statist[0].tolist() + statist[1].tolist()
+            if l == 8:
+                statist = custom_tailless(stats[k], 0.9, 0.9)
+                statistics = statist[0].tolist() + statist[1].tolist()
+            if l == 9:
+                statist = symlet(stats[k])
+                statistics = statist[0].tolist() + statist[1].tolist()
+            if l == 10:
+                statistics = custom_tail(derivative_ac(stats[k]), 0.9, 0.9)
+                # in here is where each transformation will go.
+                # so if 0, do the first transformation and so on.
+                # some transformations (derivatives) have only 255 points rather than 256
+                # so ensure that the ANN in the SaveResults section is organised, or use len()
+                # Yep your project is as simple as using my code and pumping through a bunch of options
+                # And then recording 100 times more data (10kSps) with a few (5) people
+                # and seeing if it improves your accuracy beyond 1-2 %
+            # statistics = stats[k]
+            home = '/Users/jackmclovin/PycharmProjects Data/BCI Data/RasppiBasedBCI/Transformed Data/'
+            actual_file_name = home + to_str(n) + '/' + to_str(j) + '/' + to_str(k) + '/' + to_str(l) + '.json'
+            # N is Number person, J is number of test, K is number of channel, L is transformation
+            # ANN uses Predicts N from J, comparing different K's and L's over P percent learnt.
+            if not os.path.exists(home + to_str(n) + '/'):
+                os.makedirs(home + to_str(n) + '/')
+            if not os.path.exists(home + to_str(n) + '/' + to_str(j) + '/'):
+                os.makedirs(home + to_str(n) + '/' + to_str(j) + '/')
+            if not os.path.exists(home + to_str(n) + '/' + to_str(j) + '/' + to_str(k) + '/'):
+                os.makedirs(home + to_str(n) + '/' + to_str(j) + '/' + to_str(k) + '/')
 
-                    writefile = open(actual_file_name, 'w+')
-                    writefile.close()
-                    with open(actual_file_name, 'w') as outfile:
-                        json.dump(statistics, outfile, sort_keys=True, indent=4,
-                                  ensure_ascii=False)
-    # with open ('outfile', 'rb') as fp:
-    # stats = pickle.load(fp)
+            writefile = open(actual_file_name, 'w+')
+            writefile.close()
+            with open(actual_file_name, 'w') as outfile:
+                json.dump(statistics, outfile, sort_keys=True, indent=4,
+                          ensure_ascii=False)
+        # with open ('outfile', 'rb') as fp:
+        # stats = pickle.load(fp)
 
 
 def to_str(k):

@@ -11,8 +11,8 @@ def to_str(k):
         return str(k)
 
 files = [[0]*120]*160
-for n in range(0, 160):
-    for j in range(0, 120):
+for n in range(160):
+    for j in range(120):
 
             # save list of actual files, rename so they're in order
             if os.path.exists(home + to_str(n) + '/'):

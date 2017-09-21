@@ -26,3 +26,12 @@ print(maxi)
 print(c)
 print(t)
 
+tally = 0
+for c in range(64):
+    t = 10
+    importing_file = home + 'Results/122/' + to_str(c) + '/' + to_str(t) + '.json'
+    with open(importing_file, 'rb') as fp:
+        inputs = json.load(fp)
+    tally += inputs
+
+print(tally/64)
